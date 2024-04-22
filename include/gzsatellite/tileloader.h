@@ -35,7 +35,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 
-#include <cpr/cpr.h>
+// #include <cpr/cpr.h>
+#include <curl/curl.h>
 
 namespace gzsatellite {
 
@@ -128,6 +129,8 @@ namespace gzsatellite {
     // A unique hash of this loader's parameters
     const std::string hash() const;
 
+    static size_t write_data(void *ptr, size_t size, size_t nmemb, std::string *data);
+
   private:
     double latitude_;
     double longitude_;
@@ -161,6 +164,7 @@ namespace gzsatellite {
 
     /// Determine the tile index range for x, y
     void tileRange(int& min_x, int& max_x, int& min_y, int& max_y) const;
+
   };
 
 }

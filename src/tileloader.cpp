@@ -117,47 +117,58 @@ TileLoader::TileLoader(const std::string& cacheRoot, const std::string& service,
 
 const std::vector<TileLoader::MapTile>& TileLoader::loadTiles(bool download)
 {
-  // discard previous set of tiles and all pending requests
-  abort();
+    // discard previous set of tiles and all pending requests
+    abort();
 
-  // determine what range of tiles we can load
-  int min_x, max_x, min_y, max_y;
-  tileRange(min_x, max_x, min_y, max_y);
+    // determine what range of tiles we can load
+    int min_x, max_x, min_y, max_y;
+    tileRange(min_x, max_x, min_y, max_y);
 
-  // initiate blocking requests
-  for (int y = min_y; y <= max_y; y++) {
-    for (int x = min_x; x <= max_x; x++) {
-      // Generate filename
-      const fs::path full_path = cachedPathForTile(x, y, zoom_);
+    // initiate blocking requests
+    for (int y = min_y; y <= max_y; y++) {
+        for (int x = min_x; x <= max_x; x++) {
+            // Generate filename
+            const fs::path full_path = cachedPathForTile(x, y, zoom_);
 
-      // Check if tile is already in the cache (or if we shouldn't download)
-      if (fs::exists(full_path) || !download) {
-        tiles_.push_back(MapTile(x, y, zoom_, full_path));
+            // Check if tile is already in the cache (or if we shouldn't download)
+            if (fs::exists(full_path) || !download) {
+                tiles_.push_back(MapTile(x, y, zoom_, full_path));
+            } else {
+                const std::string url = uriForTile(x, y);
+                std::string response;
 
-      } else {
-        const std::string url = uriForTile(x, y);
+                CURL *curl = curl_easy_init();
+                if(curl) {
+                    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+                    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, TileLoader::write_data);
+                    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+                    CURLcode res = curl_easy_perform(curl);
 
-        // send blocking request
-        auto r = cpr::Get(cpr::Url{url});
+                    if(res == CURLE_OK) {
+                        long http_code = 0;
+                        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
-        // process the response
-        if (r.status_code == 200) {
-          // Save the response text (which is image data) as a binary
-          std::fstream imgout(full_path.string(), std::ios::out | std::ios::binary);
-          imgout.write(r.text.c_str(), r.text.size());
-          imgout.close();
+                        if (http_code == 200) {
+                            // Save the response text (which is image data) as a binary
+                            std::fstream imgout(full_path.string(), std::ios::out | std::ios::binary);
+                            imgout.write(response.c_str(), response.size());
+                            imgout.close();
 
-          // Let everyone know we have an image for this tile
-          tiles_.push_back(MapTile(x, y, zoom_, full_path));
-
-        } else {
-          std::cerr << "Failed loading " << r.url << " with code " << r.status_code << std::endl;
+                            // Let everyone know we have an image for this tile
+                            tiles_.push_back(MapTile(x, y, zoom_, full_path));
+                        } else {
+                            std::cerr << "Failed loading " << url << " with code " << http_code << std::endl;
+                        }
+                    } else {
+                        std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+                    }
+                    curl_easy_cleanup(curl);
+                }
+            }
         }
-      }
     }
-  }
 
-  return tiles_;
+    return tiles_;
 }
 
 // ----------------------------------------------------------------------------
@@ -329,6 +340,11 @@ void TileLoader::tileRange(int& min_x, int& max_x, int& min_y, int& max_y) const
   min_y = std::max(0, center_tile_y_ - y_tiles_below_);
   max_x = std::min(maxTiles(), center_tile_x_ + x_tiles_above_);
   max_y = std::min(maxTiles(), center_tile_y_ + y_tiles_above_);
+}
+
+size_t TileLoader::write_data(void *ptr, size_t size, size_t nmemb, std::string *data) {
+    data->append((char*) ptr, size * nmemb);
+    return size * nmemb;
 }
 
 } // namespace gzsatellite

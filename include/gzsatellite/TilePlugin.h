@@ -9,8 +9,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <ros/ros.h>
-#include <ros/package.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/common.hh>
@@ -20,10 +19,10 @@
 
 namespace gazebo {
 
-  class TilePlugin: public WorldPlugin {
+  class TilePlugin: public rclcpp::Node, public WorldPlugin {
     public:
       TilePlugin();
-
+      virtual ~TilePlugin();
       void Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf);
 
     private:

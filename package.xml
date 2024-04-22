@@ -1,20 +1,28 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>gzsatellite</name>
   <version>0.0.0</version>
   <description>Create Gazebo satellite imagery worlds using GIS tileservers</description>
 
   <maintainer email="parkerclusk@gmail.com">Parker Lusk</maintainer>
   <author email="parkerclusk@gmail.com">Parker Lusk</author>
+  <author email="lee.dk@etri.re.kr">Daegyu Lee</author>
   <license>BSD</license>
 
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ros_testing</test_depend>
+
+
   <depend>gazebo_ros</depend>
-  <buildtool_depend>catkin</buildtool_depend>
+  <depend>gazebo_plugins</depend>  
 
-
-  <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- Other tools can request additional information be placed here -->
-
+    <build_type>ament_cmake</build_type>
   </export>
+
 </package>

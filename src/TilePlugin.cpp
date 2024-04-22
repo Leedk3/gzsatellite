@@ -6,8 +6,15 @@ namespace gazebo {
 
 static const std::string root = "./gzsatellite/";
 
-TilePlugin::TilePlugin() {}
+TilePlugin::TilePlugin() : Node("tile_plugin_node") {
+}
 
+TilePlugin::~TilePlugin() {
+  // Do not call shutdown if ROS 2 is needed elsewhere
+  if (rclcpp::ok()) {
+    rclcpp::shutdown();
+  }
+}
 // ----------------------------------------------------------------------------
 
 void TilePlugin::Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf)
@@ -20,20 +27,29 @@ void TilePlugin::Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf)
   double width, height;
   double shift_x, shift_y;
 
-  ros::NodeHandle nh("/gzsatellite");
-  // Geographic paramters
-  nh.param<std::string>("tileserver", service, "http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}");
-  nh.param<double>("latitude", lat, 40.267463);
-  nh.param<double>("longitude", lon, -111.635655);
-  nh.param<double>("zoom", zoom, 22);
+  // // Geographic paramters
+  this->declare_parameter<std::string>("tileserver", std::string("https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg"));
+  service = this->get_parameter("tileserver").as_string();
+  this->declare_parameter<double>("latitude", double(36.381365));
+  lat = this->get_parameter("latitude").as_double();
+  this->declare_parameter<double>("longitude", double(127.364937));
+  lon = this->get_parameter("longitude").as_double();
+  this->declare_parameter<double>("zoom", double(15));
+  zoom = this->get_parameter("zoom").as_double();
   // Geographic size parameters
-  nh.param<double>("width", width, 50);
-  nh.param<double>("height", height, 50);
-  nh.param<double>("shift_ew", shift_x, 0);
-  nh.param<double>("shift_ns", shift_y, 0);
+  this->declare_parameter<double>("width", double(25));
+  width = this->get_parameter("width").as_double();
+  this->declare_parameter<double>("height", double(25));
+  height = this->get_parameter("height").as_double();
+  this->declare_parameter<double>("shift_ew", double(0));
+  shift_x = this->get_parameter("shift_ew").as_double();
+  this->declare_parameter<double>("shift_ns", double(0));
+  shift_y = this->get_parameter("shift_ns").as_double();
   // Model parameters
-  nh.param<std::string>("name", name, "Rock Canyon Park");
-  nh.param<double>("jpg_quality", quality, 60);
+  this->declare_parameter<std::string>("name", std::string("ETRI"));
+  name = this->get_parameter("name").as_string();
+  this->declare_parameter<double>("jpg_quality", double(255));
+  quality = this->get_parameter("jpg_quality").as_double();
 
   //
   // Create the model creator with parameters
