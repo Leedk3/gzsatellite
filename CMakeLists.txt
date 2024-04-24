@@ -21,6 +21,7 @@ find_package(Boost COMPONENTS system REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 find_package(gazebo REQUIRED)
+find_package(gazebo_ros REQUIRED)
 find_package(CURL REQUIRED)
 
 include_directories(include ${GAZEBO_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})

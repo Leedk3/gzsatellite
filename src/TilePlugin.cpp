@@ -4,9 +4,11 @@ namespace fs = boost::filesystem;
 
 namespace gazebo {
 
+using namespace std::chrono_literals;
+
 static const std::string root = "./gzsatellite/";
 
-TilePlugin::TilePlugin() : Node("tile_plugin_node") {
+TilePlugin::TilePlugin() : pTilePlugin_(std::make_unique<TilePluginPrivate>()) {
 }
 
 TilePlugin::~TilePlugin() {
@@ -19,41 +21,54 @@ TilePlugin::~TilePlugin() {
 
 void TilePlugin::Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf)
 {
+  pTilePlugin_->world = _parent;
+
+  pTilePlugin_->rosnode = gazebo_ros::Node::Get(_sdf);
+  RCLCPP_INFO(pTilePlugin_->rosnode->get_logger(), "Loading Tile plugin...");
+  
   this->parent_ = _parent;
 
-  std::string service, name;
-  double lat, lon, zoom;
-  double quality;
-  double width, height;
-  double shift_x, shift_y;
+  // std::string service, name;
+  // double lat, lon, zoom;
+  // double quality;
+  // double width, height;
+  // double shift_x, shift_y;
 
-  // // Geographic paramters
-  this->declare_parameter<std::string>("tileserver", std::string("https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg"));
-  service = this->get_parameter("tileserver").as_string();
-  this->declare_parameter<double>("latitude", double(36.381365));
-  lat = this->get_parameter("latitude").as_double();
-  this->declare_parameter<double>("longitude", double(127.364937));
-  lon = this->get_parameter("longitude").as_double();
-  this->declare_parameter<double>("zoom", double(15));
-  zoom = this->get_parameter("zoom").as_double();
-  // Geographic size parameters
-  this->declare_parameter<double>("width", double(25));
-  width = this->get_parameter("width").as_double();
-  this->declare_parameter<double>("height", double(25));
-  height = this->get_parameter("height").as_double();
-  this->declare_parameter<double>("shift_ew", double(0));
-  shift_x = this->get_parameter("shift_ew").as_double();
-  this->declare_parameter<double>("shift_ns", double(0));
-  shift_y = this->get_parameter("shift_ns").as_double();
-  // Model parameters
-  this->declare_parameter<std::string>("name", std::string("ETRI"));
-  name = this->get_parameter("name").as_string();
-  this->declare_parameter<double>("jpg_quality", double(255));
-  quality = this->get_parameter("jpg_quality").as_double();
+  const char* service = std::getenv("GZSATELLITE_SERVICE");
+  const char* lat_str = std::getenv("GZSATELLITE_LAT");
+  const char* lon_str = std::getenv("GZSATELLITE_LON");
+  const char* zoom_str = std::getenv("GZSATELLITE_ZOOM");
+  const char* width_str = std::getenv("GZSATELLITE_WIDTH");
+  const char* height_str = std::getenv("GZSATELLITE_HEIGHT");
+  const char* shift_x_str = std::getenv("GZSATELLITE_SHIFT_EW");
+  const char* shift_y_str = std::getenv("GZSATELLITE_SHIFT_NS");
+  const char* name = std::getenv("GZSATELLITE_NAME");
+  const char* quality_str = std::getenv("GZSATELLITE_QUALITY");
 
-  //
-  // Create the model creator with parameters
-  //
+  if (!service || !lat_str || !lon_str || !zoom_str || !width_str || !height_str || !shift_x_str || !shift_y_str || !name || !quality_str) {
+      std::cerr << "One or more environment variables are not set." << std::endl;
+      return;
+  }
+
+  double lat = std::atof(lat_str);
+  double lon = std::atof(lon_str);
+  double zoom = std::atof(zoom_str);
+  double width = std::atof(width_str);
+  double height = std::atof(height_str);
+  double shift_x = std::atof(shift_x_str);
+  double shift_y = std::atof(shift_y_str);
+  double quality = std::atof(quality_str);
+
+  gzmsg << "GzSatellite Plugin loaded - service: " << service << std::endl;
+  gzmsg << "GzSatellite Plugin loaded - lat: " << lat << std::endl;
+  gzmsg << "GzSatellite Plugin loaded - lon: " << lon << std::endl;
+  gzmsg << "GzSatellite Plugin loaded - zoom: " << zoom << std::endl;
+  gzmsg << "GzSatellite Plugin loaded - width: " << width << std::endl;
+  gzmsg << "GzSatellite Plugin loaded - height: " << height << std::endl;
+  gzmsg << "GzSatellite Plugin loaded - shift_x: " << shift_x << std::endl;
+  gzmsg << "GzSatellite Plugin loaded - shift_y: " << shift_y << std::endl;
+  gzmsg << "GzSatellite Plugin loaded - name: " << name << std::endl;
+  gzmsg << "GzSatellite Plugin loaded - quality: " << quality << std::endl;
 
   gzsatellite::GeoParams params;
   params.tileserver   = service;
