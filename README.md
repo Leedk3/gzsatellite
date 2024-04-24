@@ -17,15 +17,15 @@ ROS/Gazebo plugin to create a satellite-imagery world based on a GPS location.
 
 * Clone the ROS package repository in your **src/** folder of your workspace.
 
-      git clone https://github.com/plusk01/gzsatellite && cd ..
+      git clone https://github.com/Leedk3/gzsatellite && cd ..
 
 * Build your project.
 
-      catkin build
+      colcon build --symlink-install
 
 * Finally run a test launch file. You can modify the coordinates of spawn here, for now the coordinates are set for the Rock Canyon Park.
 
-      roslaunch gzsatellite test.launch
+      ros2 launch gzsatellite test.launch.py
 
 ![Rock Canyon Park](https://user-images.githubusercontent.com/45683974/94589186-96080e80-02a2-11eb-9de5-8269363ad387.jpg)
 
